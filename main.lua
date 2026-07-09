@@ -131,7 +131,7 @@ end
 Main = (function()
 	local Main = {}
 	
-	Main.ModuleList = {"Explorer","Properties","ScriptViewer"}
+	Main.ModuleList = {"Explorer","Properties","ScriptViewer","SecretService"}
 	Main.Elevated = false
 	Main.MissingEnv = {}
 	Main.Version = "Beta 1.0.0"
@@ -992,7 +992,8 @@ Main = (function()
 		Main.CreateApp({Name = "Properties", IconMap = Main.LargeIcons, Icon = "Properties", Open = true, Window = Properties.Window})
 		
 		Main.CreateApp({Name = "Script Viewer", IconMap = Main.LargeIcons, Icon = "Script_Viewer", Window = ScriptViewer.Window})
-		
+
+		Main.CreateApp({Name = "Secret Service", IconMap = Main.MiscIcons, Icon = "ExploreData", Window = Apps.SecretService.Window})		
 		Lib.ShowGui(gui)
 	end
 	
@@ -1081,6 +1082,7 @@ Main = (function()
 		Explorer.Init()
 		Properties.Init()
 		ScriptViewer.Init()
+		Apps.SecretService.Init()
 		Lib.FastWait()
 		
 		-- Done
