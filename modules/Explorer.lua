@@ -2233,6 +2233,8 @@ return search]==]
 			local mouse = Main.Mouse
 
 			Explorer.ClickSelectCon = UIS.InputBegan:Connect(function(input, gameProcessed)
+    warn("INPUT FIRED", input.UserInputType, gameProcessed)
+    if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
     if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
 
     local camera = workspace.CurrentCamera
