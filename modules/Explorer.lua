@@ -2236,9 +2236,9 @@ return search]==]
 				if gameProcessed then return end
 				if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
 
-				for _, desc in ipairs(Main.GuiHolder:GetDescendants()) do
-					if desc:IsA("GuiObject") and Lib.CheckMouseInGui(desc) then return end
-				end
+				for _, gui in ipairs(Main.GuiHolder:GetChildren()) do
+                    if gui:IsA("ScreenGui") and Lib.CheckMouseInGui(gui) then return end
+                end
 
 				local unitRay = camera:ScreenPointToRay(mouse.X, mouse.Y)
 				local ray = Ray.new(unitRay.Origin, unitRay.Direction * 5000)
