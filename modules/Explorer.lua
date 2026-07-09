@@ -1210,8 +1210,27 @@ local function main()
 		end})
 
 		context:Register("SAVE_INST",{Name = "Save to File", IconMap = Explorer.MiscIcons, Icon = "Save", OnClick = function()
+    local sList = selection.List
+    if #sList == 0 then return end
 
-		end})
+    for i = 1,#sList do
+        local obj = sList[i].Obj
+        local name = tostring(obj)
+
+        if env.saveinstance then
+            pcall(env.saveinstance, obj, {filename = name..".rbxmx"})
+        elseif env.writefile then
+            local s, encoded = pcall(function()
+                return game:GetService("HttpService"):JSONEncode({name = name, class = obj.ClassName})
+            end)
+            if s then
+                pcall(env.writefile, name..".json", encoded)
+            end
+        else
+            warn("No save method available")
+        end
+    end
+end})
 
 		context:Register("VIEW_CONNECTIONS",{Name = "View Connections", OnClick = function()
 
