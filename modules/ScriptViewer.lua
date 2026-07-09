@@ -65,7 +65,6 @@ local function main()
 	end
 
 	local function addTab(name, source)
-		-- Check if already open
 		for _, tab in pairs(tabs) do
 			if tab.Name == name then
 				tab.Source = source
@@ -74,10 +73,39 @@ local function main()
 			end
 		end
 
-		local btn = tabTemplate:Clone()
-		btn.Title.Text = name
-		btn.Visible = true
-		btn.Parent = tabBar
+		local btn = createSimple("TextButton", {
+			BackgroundColor3 = Color3.fromRGB(60,60,60),
+			BorderSizePixel = 0,
+			Font = Enum.Font.SourceSans,
+			Name = "Tab",
+			Size = UDim2.new(0,120,1,0),
+			Text = "",
+			Parent = tabBar,
+		})
+		createSimple("TextLabel", {
+			BackgroundTransparency = 1,
+			Font = Enum.Font.SourceSans,
+			Name = "Title",
+			Size = UDim2.new(1,-18,1,0),
+			Text = name,
+			TextColor3 = Color3.new(1,1,1),
+			TextSize = 13,
+			TextTruncate = Enum.TextTruncate.AtEnd,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			Position = UDim2.new(0,4,0,0),
+			Parent = btn,
+		})
+		local closeBtn = createSimple("TextButton", {
+			BackgroundTransparency = 1,
+			Font = Enum.Font.SourceSans,
+			Name = "Close",
+			Position = UDim2.new(1,-18,0,0),
+			Size = UDim2.new(0,18,1,0),
+			Text = "x",
+			TextColor3 = Color3.fromRGB(180,180,180),
+			TextSize = 14,
+			Parent = btn,
+		})
 
 		local tab = {Name = name, Source = source, Button = btn}
 		tabs[#tabs+1] = tab
@@ -86,7 +114,7 @@ local function main()
 			switchTab(tab)
 		end)
 
-		btn.Close.MouseButton1Click:Connect(function()
+		closeBtn.MouseButton1Click:Connect(function()
 			closeTab(tab)
 		end)
 
@@ -122,37 +150,6 @@ local function main()
 			FillDirection = Enum.FillDirection.Horizontal,
 			SortOrder = Enum.SortOrder.LayoutOrder,
 			Parent = tabBar,
-		})
-
-		-- Tab template (hidden)
-		tabTemplate = createSimple("Frame", {
-			BackgroundColor3 = Color3.fromRGB(60,60,60),
-			BorderSizePixel = 0,
-			Name = "Tab",
-			Size = UDim2.new(0,120,1,0),
-			Visible = false,
-		})
-		local tabTitle = createSimple("TextButton", {
-			BackgroundTransparency = 1,
-			Font = Enum.Font.SourceSans,
-			Name = "Title",
-			Size = UDim2.new(1,-20,1,0),
-			Text = "Script",
-			TextColor3 = Color3.new(1,1,1),
-			TextSize = 13,
-			TextTruncate = Enum.TextTruncate.AtEnd,
-			Parent = tabTemplate,
-		})
-		local closeBtn = createSimple("TextButton", {
-			BackgroundTransparency = 1,
-			Font = Enum.Font.SourceSans,
-			Name = "Close",
-			Position = UDim2.new(1,-18,0,0),
-			Size = UDim2.new(0,18,1,0),
-			Text = "x",
-			TextColor3 = Color3.fromRGB(180,180,180),
-			TextSize = 14,
-			Parent = tabTemplate,
 		})
 
 		-- Code frame
