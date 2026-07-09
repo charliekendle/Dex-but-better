@@ -2233,35 +2233,34 @@ return search]==]
 			local mouse = Main.Mouse
 
 			Explorer.ClickSelectCon = UIS.InputBegan:Connect(function(input, gameProcessed)
-				if gameProcessed then return end
-				if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+    if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
 
-				for _, gui in ipairs(Main.GuiHolder:GetChildren()) do
-                    if gui:IsA("ScreenGui") and Lib.CheckMouseInGui(gui) then return end
-                end
+    local camera = workspace.CurrentCamera
+    local unitRay = camera:ScreenPointToRay(mouse.X, mouse.Y)
+    local ray = Ray.new(unitRay.Origin, unitRay.Direction * 5000)
+    local hit = workspace:FindPartOnRay(ray)
+    warn("HIT:", hit)
+    if not hit then return end
 
-				local unitRay = camera:ScreenPointToRay(mouse.X, mouse.Y)
-				local ray = Ray.new(unitRay.Origin, unitRay.Direction * 5000)
-				local hit = workspace:FindPartOnRay(ray)
-				if not hit then return end
+    local node = nodes[hit]
+    warn("NODE:", node)
+    if not node then
+        local cur = hit.Parent
+        while cur and cur ~= game do
+            node = nodes[cur]
+            if node then break end
+            cur = cur.Parent
+        end
+    end
+    warn("FINAL NODE:", node)
 
-				local node = nodes[hit]
-				if not node then
-					local cur = hit.Parent
-					while cur and cur ~= game do
-						node = nodes[cur]
-						if node then break end
-						cur = cur.Parent
-					end
-				end
-
-				if node then
-					selection.ShiftSet = {}
-					selection:Set(node)
-					selection.Piviot = node
-					Explorer.ViewNode(node)
-				end
-			end)
+    if node then
+        selection.ShiftSet = {}
+        selection:Set(node)
+        selection.Piviot = node
+        Explorer.ViewNode(node)
+    end
+end)
 		end
 
 		-- Click select toolbar button
