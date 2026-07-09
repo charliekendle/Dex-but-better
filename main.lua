@@ -985,7 +985,7 @@ Main = (function()
 		
 		-- Create Main Apps
 		Main.CreateApp({Name = "Explorer", IconMap = Main.LargeIcons, Icon = "Explorer", Open = true, Window = Explorer.Window})
-		
+		Main.CreateApp({Name = "Click Select", IconMap = Main.MiscIcons, Icon = "SelectChildren", OnClick = function(open) Explorer.SetClickSelect(open) end})
 		Main.CreateApp({Name = "Properties", IconMap = Main.LargeIcons, Icon = "Properties", Open = true, Window = Properties.Window})
 		
 		Main.CreateApp({Name = "Script Viewer", IconMap = Main.LargeIcons, Icon = "Script_Viewer", Window = ScriptViewer.Window})
