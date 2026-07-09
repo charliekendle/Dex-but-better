@@ -1211,22 +1211,18 @@ local function main()
 
 context:Register("SAVE_INST",{Name = "Save to File", IconMap = Explorer.MiscIcons, Icon = "Save", OnClick = function()
     local sList = selection.List
-    if #sList == 0 then warn("nothing selected") return end
+    if #sList == 0 then return end
 
     local obj = sList[1].Obj
     local name = tostring(obj)
-    warn("trying to save", name, obj.ClassName)
-    warn("saveinstance:", env.saveinstance)
-    warn("writefile:", env.writefile)
 
-    if env.saveinstance then
-        local s, e = pcall(env.saveinstance, obj)
-        warn("saveinstance result:", s, e)
-    elseif env.writefile then
-        warn("no saveinstance, trying writefile")
-    else
-        warn("no save method at all")
-    end
+    local s, e = pcall(function()
+        saveinstance(obj, {
+            filename = name,
+            mode = "optimised"
+        })
+    end)
+    warn("save result:", s, e)
 end})
 
 		context:Register("VIEW_CONNECTIONS",{Name = "View Connections", OnClick = function()
