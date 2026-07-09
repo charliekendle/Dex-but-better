@@ -2088,7 +2088,7 @@ return search]==]
 	end
 
 	Explorer.Init = function()
-		Explorer.ClassIcons = Lib.IconMap.newLinear("rbxasset://textures/ClassImages.png",16,16)
+		Explorer.ClassIcons = Lib.IconMap.newLinear("rbxassetid://6523102579",16,16)
 		Explorer.MiscIcons = Main.MiscIcons
 
 		clipboard = {}
