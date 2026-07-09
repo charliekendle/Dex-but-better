@@ -1219,7 +1219,8 @@ context:Register("SAVE_INST",{Name = "Save to File", IconMap = Explorer.MiscIcon
 
     local s, e = pcall(synsaveinstance, {
         Object = obj,
-        FilePath = tostring(obj)..".rbxmx"
+        FilePath = tostring(obj)..".rbxmx",
+        SavePlayers = false,
     })
     warn("save result:", s, e)
 end})
