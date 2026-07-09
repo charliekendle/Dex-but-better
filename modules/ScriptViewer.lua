@@ -3,18 +3,15 @@
 	
 	A script viewer that is basically a notepad
 ]]
-
 -- Common Locals
 local Main,Lib,Apps,Settings -- Main Containers
 local Explorer, Properties, ScriptViewer, Notebook -- Major Apps
 local API,RMD,env,service,plr,create,createSimple -- Main Locals
-
 local function initDeps(data)
 	Main = data.Main
 	Lib = data.Lib
 	Apps = data.Apps
 	Settings = data.Settings
-
 	API = data.API
 	RMD = data.RMD
 	env = data.env
@@ -23,46 +20,85 @@ local function initDeps(data)
 	create = data.create
 	createSimple = data.createSimple
 end
-
 local function initAfterMain()
 	Explorer = Apps.Explorer
 	Properties = Apps.Properties
 	ScriptViewer = Apps.ScriptViewer
 	Notebook = Apps.Notebook
 end
-
 local function main()
 	local ScriptViewer = {}
+	local window, codeFrame
+	local tabs = {}
+	local activeTab = nil
+	local tabBar, tabTemplate
 
-	local window,codeFrame
+	local function updateTabBar()
+		for _, tab in pairs(tabs) do
+			tab.Button.BackgroundColor3 = tab == activeTab and Color3.fromRGB(40,40,40) or Color3.fromRGB(60,60,60)
+			tab.Button.Title.TextColor3 = tab == activeTab and Color3.new(1,1,1) or Color3.fromRGB(180,180,180)
+		end
+	end
 
-	ScriptViewer.ViewScript = function(scr)
-		local s,source = pcall(env.decompile or function() end,scr)
-		if not s or not source then
-			source = "local test = 5\n\nlocal c = test + tick()\ngame.Workspace.Board:Destroy()\nstring.match('wow\\'f',\"yes\",3.4e-5,true)\ngame. Workspace.Wow\nfunction bar() print(54) end\n string . match() string 4 .match()"
-			source = source.."\n"..[==[
-			function a.sad() end
-			function a.b:sad() end
-			function 4.why() end
-			function a b() end
-			function string.match() end
-			function string.match.why() end
-			function local() end
-			function local.thing() end
-			string  . "sad" match
-			().magnitude = 3
-			a..b
-			a..b()
-			a...b
-			a...b()
-			a....b
-			a....b()
-			string..match()
-			string....match()
-			]==]
+	local function switchTab(tab)
+		activeTab = tab
+		codeFrame:SetText(tab.Source)
+		window:SetTitle("Script Viewer - "..tab.Name)
+		updateTabBar()
+	end
+
+	local function closeTab(tab)
+		local idx = table.find(tabs, tab)
+		if not idx then return end
+		tab.Button:Destroy()
+		table.remove(tabs, idx)
+
+		if activeTab == tab then
+			activeTab = nil
+			if #tabs > 0 then
+				switchTab(tabs[math.max(1, idx-1)])
+			else
+				codeFrame:SetText("")
+				window:SetTitle("Script Viewer")
+			end
+		end
+	end
+
+	local function addTab(name, source)
+		-- Check if already open
+		for _, tab in pairs(tabs) do
+			if tab.Name == name then
+				tab.Source = source
+				switchTab(tab)
+				return
+			end
 		end
 
-		codeFrame:SetText(source)
+		local btn = tabTemplate:Clone()
+		btn.Title.Text = name
+		btn.Visible = true
+		btn.Parent = tabBar
+
+		local tab = {Name = name, Source = source, Button = btn}
+		tabs[#tabs+1] = tab
+
+		btn.MouseButton1Click:Connect(function()
+			switchTab(tab)
+		end)
+
+		btn.Close.MouseButton1Click:Connect(function()
+			closeTab(tab)
+		end)
+
+		switchTab(tab)
+	end
+
+	ScriptViewer.ViewScript = function(scr)
+		local s, source = pcall(env.decompile or function() end, scr)
+		if not s or not source then
+			source = "-- Failed to decompile"
+		end
+		addTab(tostring(scr), source)
 		window:Show()
 	end
 
@@ -72,44 +108,97 @@ local function main()
 		window:Resize(500,400)
 		ScriptViewer.Window = window
 
+		-- Tab bar
+		tabBar = createSimple("Frame", {
+			BackgroundColor3 = Color3.fromRGB(30,30,30),
+			BorderSizePixel = 0,
+			Name = "TabBar",
+			Position = UDim2.new(0,0,0,0),
+			Size = UDim2.new(1,0,0,20),
+			Parent = window.GuiElems.Content,
+			ClipsDescendants = true,
+		})
+		createSimple("UIListLayout", {
+			FillDirection = Enum.FillDirection.Horizontal,
+			SortOrder = Enum.SortOrder.LayoutOrder,
+			Parent = tabBar,
+		})
+
+		-- Tab template (hidden)
+		tabTemplate = createSimple("Frame", {
+			BackgroundColor3 = Color3.fromRGB(60,60,60),
+			BorderSizePixel = 0,
+			Name = "Tab",
+			Size = UDim2.new(0,120,1,0),
+			Visible = false,
+		})
+		local tabTitle = createSimple("TextButton", {
+			BackgroundTransparency = 1,
+			Font = Enum.Font.SourceSans,
+			Name = "Title",
+			Size = UDim2.new(1,-20,1,0),
+			Text = "Script",
+			TextColor3 = Color3.new(1,1,1),
+			TextSize = 13,
+			TextTruncate = Enum.TextTruncate.AtEnd,
+			Parent = tabTemplate,
+		})
+		local closeBtn = createSimple("TextButton", {
+			BackgroundTransparency = 1,
+			Font = Enum.Font.SourceSans,
+			Name = "Close",
+			Position = UDim2.new(1,-18,0,0),
+			Size = UDim2.new(0,18,1,0),
+			Text = "x",
+			TextColor3 = Color3.fromRGB(180,180,180),
+			TextSize = 14,
+			Parent = tabTemplate,
+		})
+
+		-- Code frame
 		codeFrame = Lib.CodeFrame.new()
-		codeFrame.Frame.Position = UDim2.new(0,0,0,20)
-		codeFrame.Frame.Size = UDim2.new(1,0,1,-20)
+		codeFrame.Frame.Position = UDim2.new(0,0,0,40)
+		codeFrame.Frame.Size = UDim2.new(1,0,1,-40)
 		codeFrame.Frame.Parent = window.GuiElems.Content
 
-		-- TODO: REMOVE AND MAKE BETTER
-		local copy = Instance.new("TextButton",window.GuiElems.Content)
-		copy.BackgroundTransparency = 1
-		copy.Size = UDim2.new(0.5,0,0,20)
-		copy.Text = "Copy to Clipboard"
-		copy.TextColor3 = Color3.new(1,1,1)
-
+		-- Toolbar buttons
+		local copy = createSimple("TextButton", {
+			BackgroundTransparency = 1,
+			Position = UDim2.new(0,0,0,20),
+			Size = UDim2.new(0.5,0,0,20),
+			Text = "Copy to Clipboard",
+			TextColor3 = Color3.new(1,1,1),
+			Font = Enum.Font.SourceSans,
+			TextSize = 14,
+			Parent = window.GuiElems.Content,
+		})
 		copy.MouseButton1Click:Connect(function()
-			local source = codeFrame:GetText()
-			setclipboard(source)
+			if env.setclipboard then
+				env.setclipboard(codeFrame:GetText())
+			end
 		end)
 
-		local save = Instance.new("TextButton",window.GuiElems.Content)
-		save.BackgroundTransparency = 1
-		save.Position = UDim2.new(0.5,0,0,0)
-		save.Size = UDim2.new(0.5,0,0,20)
-		save.Text = "Save to File"
-		save.TextColor3 = Color3.new(1,1,1)
-
+		local save = createSimple("TextButton", {
+			BackgroundTransparency = 1,
+			Position = UDim2.new(0.5,0,0,20),
+			Size = UDim2.new(0.5,0,0,20),
+			Text = "Save to File",
+			TextColor3 = Color3.new(1,1,1),
+			Font = Enum.Font.SourceSans,
+			TextSize = 14,
+			Parent = window.GuiElems.Content,
+		})
 		save.MouseButton1Click:Connect(function()
 			local source = codeFrame:GetText()
 			local filename = "Place_"..game.PlaceId.."_Script_"..os.time()..".txt"
-
-			writefile(filename,source)
-			if movefileas then -- TODO: USE ENV
-				movefileas(filename,".txt")
+			if env.writefile then
+				env.writefile(filename, source)
 			end
 		end)
 	end
 
 	return ScriptViewer
 end
-
 -- TODO: Remove when open source
 if gethsfuncs then
 	_G.moduleData = {InitDeps = initDeps, InitAfterMain = initAfterMain, Main = main}
