@@ -2215,6 +2215,80 @@ return search]==]
 				par[#par+1] = newNode
 			end
 		end
+
+		-- Click to Select
+		Explorer.ClickSelectEnabled = false
+		Explorer.ClickSelectCon = nil
+
+		Explorer.SetClickSelect = function(enabled)
+			Explorer.ClickSelectEnabled = enabled
+			if Explorer.ClickSelectCon then
+				Explorer.ClickSelectCon:Disconnect()
+				Explorer.ClickSelectCon = nil
+			end
+			if not enabled then return end
+
+			local camera = workspace.CurrentCamera
+			local UIS = service.UserInputService
+			local mouse = Main.Mouse
+
+			Explorer.ClickSelectCon = UIS.InputBegan:Connect(function(input, gameProcessed)
+				if gameProcessed then return end
+				if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+
+				for _, desc in ipairs(Main.GuiHolder:GetDescendants()) do
+					if desc:IsA("GuiObject") and Lib.CheckMouseInGui(desc) then return end
+				end
+
+				local unitRay = camera:ScreenPointToRay(mouse.X, mouse.Y)
+				local ray = Ray.new(unitRay.Origin, unitRay.Direction * 5000)
+				local hit = workspace:FindPartOnRay(ray)
+				if not hit then return end
+
+				local node = nodes[hit]
+				if not node then
+					local cur = hit.Parent
+					while cur and cur ~= game do
+						node = nodes[cur]
+						if node then break end
+						cur = cur.Parent
+					end
+				end
+
+				if node then
+					selection.ShiftSet = {}
+					selection:Set(node)
+					selection.Piviot = node
+					Explorer.ViewNode(node)
+				end
+			end)
+		end
+
+		-- Click select toolbar button
+		local clickSelectBtn = createSimple("TextButton", {
+			AutoButtonColor = false,
+			BackgroundColor3 = Settings.Theme.Button,
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			Font = Enum.Font.SourceSans,
+			Name = "ClickSelect",
+			Parent = toolBar,
+			Position = UDim2.new(1, -42, 0, 2),
+			Size = UDim2.new(0, 18, 0, 18),
+			Text = "",
+			TextSize = 14,
+		})
+		local clickSelectIcon = Main.MiscIcons:GetLabel()
+		clickSelectIcon.Position = UDim2.new(0, 1, 0, 1)
+		clickSelectIcon.Parent = clickSelectBtn
+		Main.MiscIcons:DisplayByKey(clickSelectIcon, "SelectChildren")
+		Lib.ButtonAnim(clickSelectBtn, {Mode = 2, StartColor = Settings.Theme.Button})
+
+		clickSelectBtn.MouseButton1Click:Connect(function()
+			Explorer.SetClickSelect(not Explorer.ClickSelectEnabled)
+			clickSelectBtn.BackgroundTransparency = Explorer.ClickSelectEnabled and 0 or 1
+			clickSelectBtn.BackgroundColor3 = Explorer.ClickSelectEnabled and Settings.Theme.ListSelection or Settings.Theme.Button
+		end)
 	end
 
 	return Explorer
