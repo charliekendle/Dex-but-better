@@ -1214,14 +1214,22 @@ context:Register("SAVE_INST",{Name = "Save to File", IconMap = Explorer.MiscIcon
     if #sList == 0 then return end
 
     local obj = sList[1].Obj
-    local name = tostring(obj)
 
-    local s, e = pcall(function()
-        saveinstance(obj, {
-            filename = name,
-            mode = "optimised"
-        })
-    end)
+    local synsaveinstance = loadstring(game:HttpGet("https://raw.githubusercontent.com/luau/UniversalSynSaveInstance/main/saveinstance.luau", true), "saveinstance")()
+
+    local Options = {
+        IsolateStarterPlayer = true,
+        IsolatePlayers = true,
+        IsolateLocalPlayer = true,
+        IgnoreDefaultPlayerScripts = false,
+        TreatUnionsAsParts = false,
+        DecompileTimeout = 30,
+        SafeMode = false,
+        Object = obj,
+        FilePath = tostring(obj)..".rbxmx"
+    }
+
+    local s, e = pcall(synsaveinstance, Options)
     warn("save result:", s, e)
 end})
 
