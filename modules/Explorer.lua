@@ -880,7 +880,9 @@ local function main()
 			context:AddRegistered("TELEPORT_TO")
 			context:AddRegistered("VIEW_OBJECT")
 		end
-
+      if presentClasses["BasePart"] or presentClasses["Model"] then
+    context:AddRegistered("VIEW_3D")
+end
 		if presentClasses["Player"] then
 			context:AddRegistered("SELECT_CHARACTER")
 		end
@@ -1232,7 +1234,116 @@ end})
 		context:Register("VIEW_API",{Name = "View API Page", IconMap = Explorer.MiscIcons, Icon = "Reference", OnClick = function()
 
 		end})
+    context:Register("VIEW_3D",{Name = "View in 3D", OnClick = function()
+    local sList = selection.List
+    if #sList == 0 then return end
+    local obj = sList[1].Obj
 
+    -- Create window
+    local viewWindow = Lib.Window.new()
+    viewWindow:SetTitle("3D Preview - "..tostring(obj))
+    viewWindow:Resize(400,350)
+
+    -- ViewportFrame
+    local vp = createSimple("ViewportFrame", {
+        BackgroundColor3 = Color3.fromRGB(50,50,50),
+        BorderSizePixel = 0,
+        Size = UDim2.new(1,0,1,-20),
+        Position = UDim2.new(0,0,0,20),
+        Parent = viewWindow.GuiElems.Content,
+    })
+
+    -- Camera
+    local cam = Instance.new("Camera")
+    cam.Parent = vp
+    vp.CurrentCamera = cam
+
+    -- Clone object into viewport
+    local clone = obj:Clone()
+    clone.Parent = vp
+
+    -- Figure out center and size
+    local cf, size
+    if clone:IsA("BasePart") then
+        cf = clone.CFrame
+        size = clone.Size
+    elseif clone:IsA("Model") then
+        local s,c,sz = pcall(function()
+            return clone:GetBoundingBox()
+        end)
+        if s then cf = c size = sz else cf = CFrame.new() size = Vector3.new(4,4,4) end
+    else
+        cf = CFrame.new()
+        size = Vector3.new(4,4,4)
+    end
+
+    local dist = size.Magnitude * 1.5
+    local camCF = cf * CFrame.new(0, size.Y * 0.5, dist)
+    cam.CFrame = camCF
+    cam.Focus = cf
+
+    -- Orbit controls
+    local UIS = service.UserInputService
+    local mouse = Main.Mouse
+    local dragging = false
+    local lastX, lastY
+    local angleX, angleY = 0, 0
+    local zoom = dist
+
+    local function updateCamera()
+        local rotation = CFrame.Angles(0, math.rad(angleX), 0) * CFrame.Angles(math.rad(angleY), 0, 0)
+        cam.CFrame = cf * rotation * CFrame.new(0, 0, zoom)
+        cam.Focus = cf
+    end
+
+    vp.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            lastX = mouse.X
+            lastY = mouse.Y
+        end
+    end)
+
+    vp.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+
+    vp.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
+            local dx = mouse.X - lastX
+            local dy = mouse.Y - lastY
+            lastX = mouse.X
+            lastY = mouse.Y
+            angleX = angleX + dx * 0.5
+            angleY = math.clamp(angleY + dy * 0.5, -80, 80)
+            updateCamera()
+        elseif input.UserInputType == Enum.UserInputType.MouseWheel then
+            zoom = math.clamp(zoom - input.Position.Z * (dist * 0.1), dist * 0.2, dist * 3)
+            updateCamera()
+        end
+    end)
+
+    -- Reset button
+    local resetBtn = createSimple("TextButton", {
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1,0,0,20),
+        Text = "Reset Camera",
+        TextColor3 = Color3.new(1,1,1),
+        Font = Enum.Font.SourceSans,
+        TextSize = 14,
+        Parent = viewWindow.GuiElems.Content,
+    })
+    resetBtn.MouseButton1Click:Connect(function()
+        angleX, angleY = 0, 0
+        zoom = dist
+        updateCamera()
+    end)
+
+    updateCamera()
+    viewWindow:Show()
+end})
 		context:Register("VIEW_OBJECT",{Name = "View Object (Right click to reset)", IconMap = Explorer.ClassIcons, Icon = 5, OnClick = function()
 			local sList = selection.List
 			local isa = game.IsA
