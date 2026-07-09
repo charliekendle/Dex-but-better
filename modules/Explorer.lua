@@ -1209,26 +1209,23 @@ local function main()
 
 		end})
 
-		context:Register("SAVE_INST",{Name = "Save to File", IconMap = Explorer.MiscIcons, Icon = "Save", OnClick = function()
+context:Register("SAVE_INST",{Name = "Save to File", IconMap = Explorer.MiscIcons, Icon = "Save", OnClick = function()
     local sList = selection.List
-    if #sList == 0 then return end
+    if #sList == 0 then warn("nothing selected") return end
 
-    for i = 1,#sList do
-        local obj = sList[i].Obj
-        local name = tostring(obj)
+    local obj = sList[1].Obj
+    local name = tostring(obj)
+    warn("trying to save", name, obj.ClassName)
+    warn("saveinstance:", env.saveinstance)
+    warn("writefile:", env.writefile)
 
-        if env.saveinstance then
-            pcall(env.saveinstance, obj, {filename = name..".rbxmx"})
-        elseif env.writefile then
-            local s, encoded = pcall(function()
-                return game:GetService("HttpService"):JSONEncode({name = name, class = obj.ClassName})
-            end)
-            if s then
-                pcall(env.writefile, name..".json", encoded)
-            end
-        else
-            warn("No save method available")
-        end
+    if env.saveinstance then
+        local s, e = pcall(env.saveinstance, obj)
+        warn("saveinstance result:", s, e)
+    elseif env.writefile then
+        warn("no saveinstance, trying writefile")
+    else
+        warn("no save method at all")
     end
 end})
 
