@@ -2204,7 +2204,7 @@ return search]==]
 		--  Classes without a modern icon fall back to the classic client
 		--  sheet, so nothing is ever blank.
 		-- ============================================================
-		local MODERN_ICON_ASSET = "rbxassetid://127747200259544"
+		local MODERN_ICON_ASSET = "rbxassetid://112674257597503"
 		local MODERN_ICON_SIZE  = 32   -- native icon size in the sheet
 		local MODERN_ICON_COLS  = 32   -- icons per row
 
