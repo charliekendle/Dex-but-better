@@ -2196,39 +2196,105 @@ return search]==]
 	end
 
 	Explorer.Init = function()
-		-- Base spritesheet provider (works everywhere, incl. live/injected games).
-		-- This is the same source Dex has always used; its :Display computes the
-		-- rect offset from a numeric icon index for us.
-		Explorer.ClassIcons = Lib.IconMap.newLinear("rbxassetid://6523102579",16,16)
+		-- ============================================================
+		--  MODERN CLASS ICONS (extracted from create.roblox.com docs)
+		--  265 modern icons in a 1024x288 sheet, 32x32 each, 32 per row.
+		--  STEP 1: upload ModernClassIcons.png to Roblox as a Decal/Image.
+		--  STEP 2: put its asset id below (numbers only or full rbxassetid).
+		--  Classes without a modern icon fall back to the classic client
+		--  sheet, so nothing is ever blank.
+		-- ============================================================
+		local MODERN_ICON_ASSET = "rbxassetid://127747200259544"
+		local MODERN_ICON_SIZE  = 32   -- native icon size in the sheet
+		local MODERN_ICON_COLS  = 32   -- icons per row
 
-		-- StudioService:GetClassIcon is PluginSecurity: it exists ONLY in Studio and
-		-- throws in a live/injected game. So we probe for it safely and only use it
-		-- when actually running inside Studio. In-game we fall through to the
-		-- spritesheet above via the class's RMD ExplorerImageIndex.
-		local StudioService
-		pcall(function() StudioService = game:GetService("StudioService") end)
+		local ModernIconIndex = {
+			["Accessory"]=0,["Actor"]=1,["AdGui"]=2,["AdPortal"]=3,["AirController"]=4,["AlignOrientation"]=5,
+			["AlignPosition"]=6,["AngularVelocity"]=7,["Animation"]=8,["AnimationConstraint"]=9,["AnimationController"]=10,
+			["AnimationFromVideoCreatorService"]=11,["Animator"]=12,["ArcHandles"]=13,["Atmosphere"]=14,["Attachment"]=15,
+			["AudioAnalyzer"]=16,["AudioChannelMixer"]=17,["AudioChannelSplitter"]=18,["AudioChorus"]=19,
+			["AudioCompressor"]=20,["AudioDeviceInput"]=21,["AudioDeviceOutput"]=22,["AudioDistortion"]=23,["AudioEcho"]=24,
+			["AudioEmitter"]=25,["AudioEqualizer"]=26,["AudioFader"]=27,["AudioFilter"]=28,["AudioFlanger"]=29,
+			["AudioGate"]=30,["AudioLimiter"]=31,["AudioListener"]=32,["AudioPitchShifter"]=33,["AudioPlayer"]=34,
+			["AudioRecorder"]=35,["AudioReverb"]=36,["AudioSpeechToText"]=37,["AudioTextToSpeech"]=38,["AudioTremolo"]=39,
+			["AvatarEditorService"]=40,["Backpack"]=41,["BallSocketConstraint"]=42,["Beam"]=43,["BillboardGui"]=44,
+			["BindableEvent"]=45,["BindableFunction"]=46,["BlockMesh"]=47,["BloomEffect"]=48,["BlurEffect"]=49,
+			["BodyAngularVelocity"]=50,["BodyColors"]=51,["BodyForce"]=52,["BodyGyro"]=53,["BodyPosition"]=54,
+			["BodyThrust"]=55,["BodyVelocity"]=56,["Bone"]=57,["BoolValue"]=58,["BoxHandleAdornment"]=59,
+			["BrickColorValue"]=60,["BubbleChatConfiguration"]=61,["CFrameValue"]=62,["Camera"]=63,["CanvasGroup"]=64,
+			["ChannelTabsConfiguration"]=65,["CharacterMesh"]=66,["Chat"]=67,["ChatInputBarConfiguration"]=68,
+			["ChatWindowConfiguration"]=69,["ChorusSoundEffect"]=70,["ClickDetector"]=71,["ClientReplicator"]=72,
+			["ClimbController"]=73,["Clouds"]=74,["ColorCorrectionEffect"]=75,["CompressorSoundEffect"]=76,
+			["ConeHandleAdornment"]=77,["Configuration"]=78,["Controller"]=79,["CoreGui"]=80,["CornerWedgePart"]=81,
+			["CylinderHandleAdornment"]=82,["CylindricalConstraint"]=83,["Decal"]=84,["DepthOfFieldEffect"]=85,["Dialog"]=86,
+			["DialogChoice"]=87,["DistortionSoundEffect"]=88,["DragDetector"]=89,["EchoSoundEffect"]=90,["EditableImage"]=91,
+			["EditableMesh"]=92,["EqualizerSoundEffect"]=93,["Explosion"]=94,["FaceControls"]=95,["File"]=96,["Fire"]=97,
+			["FlangeSoundEffect"]=98,["Folder"]=99,["ForceField"]=100,["Frame"]=101,["GameSettings"]=102,
+			["GroundController"]=103,["Handles"]=104,["HapticEffect"]=105,["HapticService"]=106,
+			["HeightmapImporterService"]=107,["Highlight"]=108,["HingeConstraint"]=109,["Humanoid"]=110,
+			["HumanoidDescription"]=111,["IKControl"]=112,["ImageButton"]=113,["ImageHandleAdornment"]=114,
+			["ImageLabel"]=115,["InputAction"]=116,["InputBinding"]=117,["InputContext"]=118,["IntersectOperation"]=119,
+			["Lighting"]=120,["LineForce"]=121,["LineHandleAdornment"]=122,["LinearVelocity"]=123,["LocalScript"]=124,
+			["LocalizationService"]=125,["LocalizationTable"]=126,["MaterialService"]=127,["MaterialVariant"]=128,
+			["MemoryStoreService"]=129,["MeshPart"]=130,["MessagingService"]=131,["Model"]=132,["ModuleScript"]=133,
+			["Motor6D"]=134,["NegateOperation"]=135,["NetworkClient"]=136,["NoCollisionConstraint"]=137,["PackageLink"]=138,
+			["Pants"]=139,["Part"]=140,["ParticleEmitter"]=141,["Path2D"]=142,["PathfindingLink"]=143,
+			["PathfindingModifier"]=144,["PathfindingService"]=145,["PitchShiftSoundEffect"]=146,["Plane"]=147,
+			["PlaneConstraint"]=148,["Player"]=149,["Players"]=150,["PluginGuiService"]=151,["PointLight"]=152,
+			["PrismaticConstraint"]=153,["ProximityPrompt"]=154,["PublishService"]=155,["RemoteEvent"]=156,
+			["RemoteFunction"]=157,["RenderingTest"]=158,["ReplicatedFirst"]=159,["ReplicatedStorage"]=160,
+			["ReverbSoundEffect"]=161,["RigidConstraint"]=162,["RocketPropulsion"]=163,["RodConstraint"]=164,
+			["RopeConstraint"]=165,["Rotate"]=166,["ScreenGui"]=167,["Script"]=168,["ScrollingFrame"]=169,["Seat"]=170,
+			["SelectionBox"]=171,["SelectionSphere"]=172,["ServerScriptService"]=173,["ServerStorage"]=174,["Shirt"]=175,
+			["ShirtGraphic"]=176,["Sky"]=177,["Smoke"]=178,["Snap"]=179,["SocialService"]=180,["Sound"]=181,
+			["SoundEffect"]=182,["SoundGroup"]=183,["SoundService"]=184,["Sparkles"]=185,["SpawnLocation"]=186,
+			["SpecialMesh"]=187,["SphereHandleAdornment"]=188,["SpotLight"]=189,["SpringConstraint"]=190,
+			["StandalonePluginScripts"]=191,["StarterCharacterScripts"]=192,["StarterGui"]=193,["StarterPack"]=194,
+			["StarterPlayer"]=195,["StarterPlayerScripts"]=196,["StyleDerive"]=197,["StyleLink"]=198,["StyleRule"]=199,
+			["StyleSheet"]=200,["SunRaysEffect"]=201,["SurfaceAppearance"]=202,["SurfaceGui"]=203,["SurfaceLight"]=204,
+			["SurfaceSelection"]=205,["SwimController"]=206,["TaskScheduler"]=207,["Team"]=208,["Teams"]=209,["Terrain"]=210,
+			["TerrainDetail"]=211,["TestService"]=212,["TextBox"]=213,["TextBoxService"]=214,["TextButton"]=215,
+			["TextChannel"]=216,["TextChatCommand"]=217,["TextChatService"]=218,["TextLabel"]=219,["Texture"]=220,
+			["Tool"]=221,["Torque"]=222,["TorsionSpringConstraint"]=223,["Trail"]=224,["TremoloSoundEffect"]=225,
+			["TrussPart"]=226,["UGCValidationService"]=227,["UIAspectRatioConstraint"]=228,["UICorner"]=229,
+			["UIDragDetector"]=230,["UIFlexItem"]=231,["UIGradient"]=232,["UIGridLayout"]=233,["UIListLayout"]=234,
+			["UIPadding"]=235,["UIPageLayout"]=236,["UIScale"]=237,["UISizeConstraint"]=238,["UIStroke"]=239,
+			["UITableLayout"]=240,["UITextSizeConstraint"]=241,["UnionOperation"]=242,["UniversalConstraint"]=243,
+			["UnreliableRemoteEvent"]=244,["UserService"]=245,["VRService"]=246,["VectorForce"]=247,["VehicleSeat"]=248,
+			["VideoDisplay"]=249,["VideoFrame"]=250,["VideoPlayer"]=251,["ViewportFrame"]=252,["VirtualUser"]=253,
+			["VoiceChatService"]=254,["WedgePart"]=255,["Weld"]=256,["WeldConstraint"]=257,["Wire"]=258,
+			["WireframeHandleAdornment"]=259,["Workspace"]=260,["WorldModel"]=261,["WrapDeformer"]=262,["WrapLayer"]=263,
+			["WrapTarget"]=264,
+		}
 
-		local spritesheetDisplay = Explorer.ClassIcons.Display
+		-- Classic client spritesheet: ships with the Roblox client, renders in
+		-- live games with no upload. Used as the fallback for unmapped classes
+		-- and for numeric icon indices (context-menu items).
+		Explorer.ClassIcons = Lib.IconMap.newLinear("rbxasset://textures/ClassImages.PNG",16,16)
+		local classicDisplay = Explorer.ClassIcons.Display
+
 		Explorer.ClassIcons.Display = function(self, imageLabel, class)
-			-- Studio-only live icons (upgrade path); harmless no-op elsewhere.
-			if type(class) == "string" and StudioService then
-				local ok, icon = pcall(function() return StudioService:GetClassIcon(class) end)
-				if ok and type(icon) == "table" and icon.Image then
-					imageLabel.Image = icon.Image
-					imageLabel.ImageRectOffset = icon.ImageRectOffset or Vector2.new(0,0)
-					imageLabel.ImageRectSize = icon.ImageRectSize or Vector2.new(16,16)
+			if type(class) == "string" then
+				local idx = ModernIconIndex[class]
+				if idx then
+					imageLabel.Image = MODERN_ICON_ASSET
+					imageLabel.ImageRectSize = Vector2.new(MODERN_ICON_SIZE, MODERN_ICON_SIZE)
+					imageLabel.ImageRectOffset = Vector2.new(
+						MODERN_ICON_SIZE * (idx % MODERN_ICON_COLS),
+						MODERN_ICON_SIZE * math.floor(idx / MODERN_ICON_COLS)
+					)
 					return
 				end
+				-- Unmapped class -> classic sheet via RMD ExplorerImageIndex
+				local rmd = RMD.Classes[class]
+				imageLabel.ImageRectSize = Vector2.new(16, 16)
+				classicDisplay(self, imageLabel, rmd and tonumber(rmd.ExplorerImageIndex) or 0)
+				return
 			end
 
-			-- Fallback: resolve a class name to its spritesheet index, or accept a
-			-- raw numeric index (context-menu items pass indices directly).
-			local index = class
-			if type(class) == "string" then
-				local rmdEntry = RMD.Classes[class]
-				index = rmdEntry and tonumber(rmdEntry.ExplorerImageIndex) or 0
-			end
-			spritesheetDisplay(self, imageLabel, index)
+			-- Numeric index passed directly (context-menu icons) -> classic sheet
+			imageLabel.ImageRectSize = Vector2.new(16, 16)
+			classicDisplay(self, imageLabel, class)
 		end
 
 		Explorer.MiscIcons = Main.MiscIcons
