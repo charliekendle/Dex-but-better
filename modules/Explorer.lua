@@ -646,8 +646,7 @@ local function main()
 				if (isa(obj,"LocalScript") or isa(obj,"Script")) and obj.Disabled then
 					Explorer.MiscIcons:DisplayByKey(entry.Indent.Icon, isa(obj,"LocalScript") and "LocalScript_Disabled" or "Script_Disabled")
 				else
-					local rmdEntry = RMD.Classes[obj.ClassName]
-					Explorer.ClassIcons:Display(entry.Indent.Icon, rmdEntry and rmdEntry.ExplorerImageIndex or 0)
+					Explorer.ClassIcons:Display(entry.Indent.Icon, obj.ClassName)
 				end
 
 				if selection.Map[node] then
@@ -1574,15 +1573,13 @@ end})
 		local lastCategory = ""
 		for i = 1,#classes do
 			local class = classes[i][1]
-			local rmdEntry = RMD.Classes[class.Name]
-			local iconInd = rmdEntry and tonumber(rmdEntry.ExplorerImageIndex) or 0
 			local category = classes[i][2]
 
 			if lastCategory ~= category then
 				context:AddDivider(category)
 				lastCategory = category
 			end
-			context:Add({Name = class.Name, IconMap = Explorer.ClassIcons, Icon = iconInd, OnClick = onClick})
+			context:Add({Name = class.Name, IconMap = Explorer.ClassIcons, Icon = class.Name, OnClick = onClick})
 		end
 
 		Explorer.InsertObjectContext = context
@@ -1975,7 +1972,7 @@ return search]==]
 			{3,"TextLabel",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Font=3,Name="EntryName",Parent={2},Position=UDim2.new(0,26,0,0),Size=UDim2.new(1,-26,1,0),Text="Workspace",TextColor3=Color3.new(0.86274516582489,0.86274516582489,0.86274516582489),TextSize=14,TextXAlignment=0,}},
 			{4,"TextButton",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,ClipsDescendants=true,Font=3,Name="Expand",Parent={2},Position=UDim2.new(0,-20,0,0),Size=UDim2.new(0,20,0,20),Text="",TextSize=14,}},
 			{5,"ImageLabel",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Image="rbxassetid://5642383285",ImageRectOffset=Vector2.new(144,16),ImageRectSize=Vector2.new(16,16),Name="Icon",Parent={4},Position=UDim2.new(0,2,0,2),ScaleType=4,Size=UDim2.new(0,16,0,16),}},
-			{6,"ImageLabel",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Image="rbxasset://textures/ClassImages.png",ImageRectOffset=Vector2.new(304,0),ImageRectSize=Vector2.new(16,16),Name="Icon",Parent={2},Position=UDim2.new(0,4,0,2),ScaleType=4,Size=UDim2.new(0,16,0,16),}},
+			{6,"ImageLabel",{BackgroundColor3=Color3.new(1,1,1),BackgroundTransparency=1,Image="",ImageRectOffset=Vector2.new(0,0),ImageRectSize=Vector2.new(16,16),Name="Icon",Parent={2},Position=UDim2.new(0,4,0,2),ScaleType=4,Size=UDim2.new(0,16,0,16),}},
 		})
 
 		local sys = Lib.ClickSystem.new()
@@ -2199,7 +2196,37 @@ return search]==]
 	end
 
 	Explorer.Init = function()
-		Explorer.ClassIcons = Lib.IconMap.newLinear("rbxassetid://6523102579",16,16)
+		local StudioService = game:GetService("StudioService")
+
+		-- Live class-icon provider. Pulls the current icon straight from Studio via
+		-- StudioService:GetClassIcon(className) so new/updated class icons show up
+		-- automatically without maintaining a hardcoded spritesheet.
+		-- Falls back to the old spritesheet when called with a numeric icon index
+		-- (some context-menu items still pass indices).
+		Explorer.ClassIcons = {
+			Display = function(self, imageLabel, class)
+				if type(class) == "number" then
+					imageLabel.Image = "rbxassetid://6523102579"
+					imageLabel.ImageRectOffset = Vector2.new((class % 32) * 16, math.floor(class / 32) * 16)
+					imageLabel.ImageRectSize = Vector2.new(16, 16)
+					return
+				end
+
+				local ok, icon = pcall(function()
+					return StudioService:GetClassIcon(class)
+				end)
+
+				if ok and type(icon) == "table" and icon.Image then
+					imageLabel.Image = icon.Image
+					imageLabel.ImageRectOffset = icon.ImageRectOffset or Vector2.new(0, 0)
+					imageLabel.ImageRectSize = icon.ImageRectSize or Vector2.new(16, 16)
+				else
+					-- Unknown class fallback (blank rather than a wrong icon)
+					imageLabel.Image = ""
+				end
+			end,
+		}
+
 		Explorer.MiscIcons = Main.MiscIcons
 
 		clipboard = {}
