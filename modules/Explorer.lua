@@ -2196,36 +2196,40 @@ return search]==]
 	end
 
 	Explorer.Init = function()
-		local StudioService = game:GetService("StudioService")
+		-- Base spritesheet provider (works everywhere, incl. live/injected games).
+		-- This is the same source Dex has always used; its :Display computes the
+		-- rect offset from a numeric icon index for us.
+		Explorer.ClassIcons = Lib.IconMap.newLinear("rbxassetid://6523102579",16,16)
 
-		-- Live class-icon provider. Pulls the current icon straight from Studio via
-		-- StudioService:GetClassIcon(className) so new/updated class icons show up
-		-- automatically without maintaining a hardcoded spritesheet.
-		-- Falls back to the old spritesheet when called with a numeric icon index
-		-- (some context-menu items still pass indices).
-		Explorer.ClassIcons = {
-			Display = function(self, imageLabel, class)
-				if type(class) == "number" then
-					imageLabel.Image = "rbxassetid://6523102579"
-					imageLabel.ImageRectOffset = Vector2.new((class % 32) * 16, math.floor(class / 32) * 16)
-					imageLabel.ImageRectSize = Vector2.new(16, 16)
-					return
-				end
+		-- StudioService:GetClassIcon is PluginSecurity: it exists ONLY in Studio and
+		-- throws in a live/injected game. So we probe for it safely and only use it
+		-- when actually running inside Studio. In-game we fall through to the
+		-- spritesheet above via the class's RMD ExplorerImageIndex.
+		local StudioService
+		pcall(function() StudioService = game:GetService("StudioService") end)
 
-				local ok, icon = pcall(function()
-					return StudioService:GetClassIcon(class)
-				end)
-
+		local spritesheetDisplay = Explorer.ClassIcons.Display
+		Explorer.ClassIcons.Display = function(self, imageLabel, class)
+			-- Studio-only live icons (upgrade path); harmless no-op elsewhere.
+			if type(class) == "string" and StudioService then
+				local ok, icon = pcall(function() return StudioService:GetClassIcon(class) end)
 				if ok and type(icon) == "table" and icon.Image then
 					imageLabel.Image = icon.Image
-					imageLabel.ImageRectOffset = icon.ImageRectOffset or Vector2.new(0, 0)
-					imageLabel.ImageRectSize = icon.ImageRectSize or Vector2.new(16, 16)
-				else
-					-- Unknown class fallback (blank rather than a wrong icon)
-					imageLabel.Image = ""
+					imageLabel.ImageRectOffset = icon.ImageRectOffset or Vector2.new(0,0)
+					imageLabel.ImageRectSize = icon.ImageRectSize or Vector2.new(16,16)
+					return
 				end
-			end,
-		}
+			end
+
+			-- Fallback: resolve a class name to its spritesheet index, or accept a
+			-- raw numeric index (context-menu items pass indices directly).
+			local index = class
+			if type(class) == "string" then
+				local rmdEntry = RMD.Classes[class]
+				index = rmdEntry and tonumber(rmdEntry.ExplorerImageIndex) or 0
+			end
+			spritesheetDisplay(self, imageLabel, index)
+		end
 
 		Explorer.MiscIcons = Main.MiscIcons
 
